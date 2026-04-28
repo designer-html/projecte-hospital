@@ -1,5 +1,3 @@
-
-
 -- PERSONAL (superclass)
 CREATE TABLE Personal (
     id_personal INT PRIMARY KEY,
