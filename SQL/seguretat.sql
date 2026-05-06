@@ -1,119 +1,67 @@
--- Administrador general del sistema
-CREATE ROLE admin_hospital SUPERUSER;
+-- =========================================
+-- ESQUEMA DE SEGURETAT + DATA MASKING
+-- =========================================
 
--- RRHH (gestiona personal)
-CREATE ROLE rrhh;
+-- BLOQUEIG GENERAL
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
 
--- Médicos
+-- ROLES
+CREATE ROLE admin;
+CREATE ROLE consulta;
 CREATE ROLE metge;
-
--- Enfermería
 CREATE ROLE infermer;
 
--- Personal administrativo
-CREATE ROLE administratiu;
+-- =========================
+-- PERMISOS
+-- =========================
 
--- Lectura limitada (otros usos)
-CREATE ROLE consulta;
+-- ADMIN
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;
 
+-- METGE
+GRANT SELECT, INSERT ON Visites TO metge;
+GRANT SELECT ON Pacients TO metge;
+GRANT SELECT ON Operacions TO metge;
 
---Permisos per taules---
+-- INFERMER
+GRANT SELECT ON Operacions TO infermer;
+GRANT SELECT ON Assistencia TO infermer;
 
-GRANT SELECT, INSERT, UPDATE ON Visita TO metge;
-GRANT SELECT, INSERT, UPDATE ON Operacio TO metge;
-GRANT SELECT ON Pacient TO metge;
-GRANT SELECT ON Medicament TO metge;
-GRANT SELECT ON Recepta TO metge;
+-- CONSULTA
+GRANT SELECT ON Visites TO consulta;
+GRANT SELECT ON Operacions TO consulta;
 
+-- =========================
+-- DATA MASKING PACIENTS
+-- =========================
 
----Enfermeria-----
+CREATE VIEW pacients_segurs AS
+SELECT
+    id_pacient,
+    nom,
+    cognoms,
+    CONCAT('*** *** ', RIGHT(telefon, 3)) AS telefon
+FROM Pacients;
 
-GRANT SELECT ON Operacio TO infermer;
-GRANT SELECT, INSERT ON Assistencia_Infermeria TO infermer;
+-- =========================
+-- DATA MASKING PERSONAL
+-- =========================
 
+CREATE VIEW personal_seguretat AS
+SELECT
+    id_personal,
+    nom,
+    cognoms,
+    CONCAT('******', RIGHT(dni, 2)) AS dni,
+    CONCAT(SUBSTRING(telefon, 1, 2), '****') AS telefon
+FROM Personal;
 
----Administratiu-----
+-- =========================
+-- BLOQUEIG ACCÉS ORIGINAL
+-- =========================
 
-GRANT SELECT, INSERT, UPDATE ON Pacient TO administratiu;
-GRANT SELECT, INSERT, UPDATE ON Visita TO administratiu;
-GRANT SELECT, INSERT ON Reserva_Habitacio TO administratiu;
+REVOKE SELECT ON Pacients FROM consulta;
+REVOKE SELECT ON Personal FROM consulta;
 
-----Personal ----
-
-GRANT ALL PRIVILEGES ON Personal TO rrhh;
-GRANT ALL PRIVILEGES ON Metge TO rrhh;
-GRANT ALL PRIVILEGES ON Infermer TO rrhh;
-GRANT ALL PRIVILEGES ON Personal_Vari TO rrhh;
-
-
----Consulta ----
-
-GRANT SELECT ON Pacient TO consulta;
-GRANT SELECT ON Visita TO consulta;
-GRANT SELECT ON Operacio TO consulta;
-GRANT SELECT ON Quirofan TO consulta;
-
-
-------TRIGGER 1: Evitar duplicar médico en operación (control lógico) -------
-
-CREATE OR REPLACE FUNCTION validar_medico_ocupado()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM Operacio
-        WHERE id_metge = NEW.id_metge
-        AND data = NEW.data
-        AND hora = NEW.hora
-    ) THEN
-        RAISE EXCEPTION 'El metge ja té una operació assignada en aquest horari';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
---- Activar trigger----
-
-CREATE TRIGGER trg_metge_ocupat
-BEFORE INSERT ON Operacio
-FOR EACH ROW
-EXECUTE FUNCTION validar_medico_ocupado();
-
------ TRIGGER 2: Validar fechas de reserva de habitación------
-CREATE OR REPLACE FUNCTION validar_reserva_habitacio()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.data_sortida < NEW.data_ingres THEN
-        RAISE EXCEPTION 'La data de sortida no pot ser anterior a la d''ingrés';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
----Activar trigger2----
-
-CREATE TRIGGER trg_validar_reserva
-BEFORE INSERT OR UPDATE ON Reserva_Habitacio
-FOR EACH ROW
-EXECUTE FUNCTION validar_reserva_habitacio();
-
-------Infermeres dependen de metge o planta-----
-
-ALTER TABLE Infermer
-ADD COLUMN tipus_dependencia VARCHAR(20),
-ADD COLUMN id_metge_supervisor INT NULL;
-
-CREATE OR REPLACE FUNCTION validar_dependencia_infermer()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.tipus_dependencia = 'metge' AND NEW.id_metge_supervisor IS NULL THEN
-        RAISE EXCEPTION 'Un infermer dependent de metge ha de tenir supervisor';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+GRANT SELECT ON pacients_segurs TO consulta;
+GRANT SELECT ON personal_seguretat TO consulta;
