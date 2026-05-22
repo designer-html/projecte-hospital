@@ -1,4 +1,4 @@
-# 🏥 Hospital Blanes Health Center
+# 🏥 Hospital Blanes Health Center (BHC)
 
 Sistema de gestió hospitalària desenvolupat com a projecte intermodular del Cicle Formatiu de Grau Superior d'Administració de Sistemes Informàtics en Xarxa (ASIX).
 
@@ -141,10 +141,9 @@ sudo -u postgres /usr/local/bin/restore_hospital.sh
 
 ---
 
-## 👥 Autors
+## 👥 Autor
 
 Projecte desenvolupat per:
-- **[Nom Alumne 1]**
-- **[Nom Alumne 2]**
+- **[Bangally1]**
 
 Curs 2025/2026 — ASIX | Mòduls: BD · Programació · XML/JSON
