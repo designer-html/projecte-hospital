@@ -298,7 +298,7 @@ def consulta_personal():
         cur.execute("""
             SELECT p.id_personal, p.nom, p.cognoms, p.dni,
                    'Metge' AS tipus, m.especialitat
-            FROM Personal p
+            FROM Personal_Seguretat p
             JOIN Metges m ON p.id_personal = m.id_personal
         """)
         for row in cur.fetchall():
@@ -308,7 +308,7 @@ def consulta_personal():
         cur.execute("""
             SELECT p.id_personal, p.nom, p.cognoms, p.dni,
                    'Infermer/a' AS tipus, i.titulacio
-            FROM Personal p
+            FROM Personal_Seguretat p
             JOIN Infermeria i ON p.id_personal = i.id_personal
         """)
         for row in cur.fetchall():
@@ -318,7 +318,7 @@ def consulta_personal():
         cur.execute("""
             SELECT p.id_personal, p.nom, p.cognoms, p.dni,
                    'Varis' AS tipus, v.tipus_feina
-            FROM Personal p
+            FROM Personal_Seguretat p
             JOIN Varis v ON p.id_personal = v.id_personal
         """)
         for row in cur.fetchall():
