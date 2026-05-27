@@ -145,24 +145,33 @@ def operacions_per_dia():
                 SELECT
                     o.id_operacio,
                     o.hora,
-                    pp.nom || ' ' || pp.cognoms   AS pacient,
-                    pm.nom || ' ' || pm.cognoms   AS metge,
                     COALESCE(
-                        STRING_AGG(pi.nom || ' ' || pi.cognoms, ', '), 'Sense infermeria'
+                        (SELECT pp.nom || ' ' || pp.cognoms
+                         FROM Fa f
+                         JOIN Personal pp ON f.id_metge = pp.id_personal
+                         WHERE f.id_operacio = o.id_operacio
+                         LIMIT 1),
+                        'Sense metge assignat'
+                    ) AS metge,
+                    COALESCE(
+                        (SELECT pac.nom || ' ' || pac.cognoms
+                         FROM Reserva_Quirofan rq
+                         JOIN Pacients pac ON rq.id_pacient = pac.id_pacient
+                         WHERE rq.num_quirofan = o.num_quirofan
+                           AND rq.data = o.data
+                           AND rq.hora = o.hora
+                         LIMIT 1),
+                        'Sense pacient assignat'
+                    ) AS pacient,
+                    COALESCE(
+                        (SELECT STRING_AGG(pi.nom || ' ' || pi.cognoms, ', ')
+                         FROM Assistencia ass
+                         JOIN Personal pi ON ass.id_infermer = pi.id_personal
+                         WHERE ass.id_operacio = o.id_operacio),
+                        'Sense infermeria'
                     ) AS infermeria
                 FROM Operacions o
-                JOIN Reserva_Quirofan rq
-                    ON o.num_quirofan = rq.num_quirofan
-                    AND o.data = rq.data
-                    AND o.hora = rq.hora
-                JOIN Pacients pac ON rq.id_pacient = pac.id_pacient
-                JOIN Personal pp  ON pac.id_pacient = pp.id_personal
-                JOIN Fa f         ON o.id_operacio = f.id_operacio
-                JOIN Personal pm  ON f.id_metge = pm.id_personal
-                LEFT JOIN Assistencia ass ON o.id_operacio = ass.id_operacio
-                LEFT JOIN Personal pi     ON ass.id_infermer = pi.id_personal
                 WHERE o.data = %s AND o.num_quirofan = %s
-                GROUP BY o.id_operacio, o.hora, pacient, metge
                 ORDER BY o.hora
             """, (entrada_data.get(), entrada_quirofan.get()))
 
