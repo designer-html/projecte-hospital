@@ -1,0 +1,19 @@
+Actualització a la taula Usuari s'ha creat una nova columna on hi ficarem el rol del usuari.
+
+Tambe s'ha creat nous usuaris per defecte de cada rol 
+
+Per tant s'ha modificat el login.
+
+
+-- Afegir columna rol a la taula usuaris
+ALTER TABLE usuaris ADD COLUMN rol VARCHAR(20) DEFAULT 'consulta';
+
+-- Crear usuaris per defecte per cada rol
+-- (contrasenya és el hash SHA256 de '1234')
+INSERT INTO usuaris (usuari, contrasenya, rol) VALUES
+    ('admin',    encode(sha256('1234'::bytea), 'hex'), 'admin'),
+    ('metge',    encode(sha256('1234'::bytea), 'hex'), 'metge'),
+    ('infermer', encode(sha256('1234'::bytea), 'hex'), 'infermer'),
+    ('consulta', encode(sha256('1234'::bytea), 'hex'), 'consulta');
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
