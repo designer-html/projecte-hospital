@@ -172,10 +172,11 @@ CREATE TABLE Reserva_Quirofan (
     FOREIGN KEY (num_quirofan)  REFERENCES Quirofan(num_quirofan)
 );
  
--- Usuaris (login)
-CREATE TABLE Usuaris (
-    usuari     TEXT PRIMARY KEY,
-    contrasenya TEXT
-);
+-- Usuaris per defecte (contrasenya '1234')
+INSERT INTO usuaris (usuari, contrasenya, rol) VALUES
+    ('admin',    encode(sha256('1234'::bytea), 'hex'), 'admin'),
+    ('metge',    encode(sha256('1234'::bytea), 'hex'), 'metge'),
+    ('infermer', encode(sha256('1234'::bytea), 'hex'), 'infermer'),
+    ('consulta', encode(sha256('1234'::bytea), 'hex'), 'consulta');
  
 COMMIT;
