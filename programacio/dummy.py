@@ -283,6 +283,7 @@ def crear_dummy_data():
             """, bloc)
 
         # ---- VISITES (100.000) ----
+        cur.execute("ALTER TABLE Visites DISABLE TRIGGER trg_visites")
         print("Creant 100.000 visites (pot trigar uns minuts)...")
         id_visita = 1
         data_base = date(2023, 1, 1)
@@ -311,6 +312,10 @@ def crear_dummy_data():
                 INSERT INTO Visites (id_visita, data, hora, diagnostic, id_pacient, id_metge)
                 VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
             """, bloc)
+
+        # Tornem a activar el trigger després del dummy data
+        cur.execute("ALTER TABLE Visites ENABLE TRIGGER trg_visites")
+        print("Trigger de visites tornat a activar.")
 
         # ---- RECEPTES (algunes visites amb medicaments) ----
         print("Creant receptes...")
